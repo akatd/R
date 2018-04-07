@@ -1,0 +1,111 @@
+vim: syntax=r
+
+###1###  pass values between modules
+
+#tab1
+
+tab1_ui <- fluidPage()
+
+tab1_server <- function(input, output, session){
+
+storevals <- reactiveValues()
+
+	return(storevals)
+
+}
+
+#tab2
+
+tab2_ui <- fluidPage()
+
+tab2_server <- function(input, output, session, returnvals){
+
+	print(returnvals())
+
+}
+
+#server.R
+
+callModule(tab1_server, "tab1")
+passvals <- callModule(tab1_server, "tab1")
+callModule(tab2_server, "tab2", passvals)
+
+###2### select all in dropdown menu
+
+ui <- fluidPage(
+
+	uiOutput("myselect")
+
+)
+
+server <- function(input, output, session){
+
+	choices <- c(1:10)
+
+	output$myselect <- renderUI(
+
+		selectInput("myselect", "make your selection", choices = choices, multiple = T)
+
+	)
+
+	observe({
+
+		if("All" %in% input$myselect){
+
+			selected_choices <- c("All", setdiff(choices, "All"))
+
+			updateSelectInput(session, "myselect", selected = selected_choices)}
+
+	})
+
+}
+
+###3### update subsequent inputs with leftover choices 
+
+ui <- fluidPage(
+  
+  uiOutput("selection1"),
+  uiOutput("selection2"),
+  uiOutput("selection3")
+  
+)
+
+server <- function(input, output, session){
+  
+  choices <- c(1:10)
+  
+  output$selection1 <- renderUI(
+    
+    selectInput("selection1", "first input", choices, multiple = T, selected = choices)
+    
+  )
+  
+  output$selection2 <- renderUI(
+    
+    selectInput("selection2", "second input", choices, multiple = T)
+    
+  )
+  
+  output$selection3 <- renderUI(
+    
+    selectInput("selection3", "third input", choices, multiple = T)
+    
+  )
+  
+  observe({
+      
+      available_choices <- input$selection1
+      
+      updateSelectInput(session, "selection2", choices = available_choices)
+    
+  })
+  
+  observe({
+    
+    available_choices <- input$selection2
+    
+    updateSelectInput(session, "selection3", choices = available_choices)
+    
+  })
+  
+}
